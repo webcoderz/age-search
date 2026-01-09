@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "age_search"
+version = "0.2.0"
+description = "Unified SQLAlchemy helpers for Apache AGE + pgvector + BM25/FTS + hybrid search."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "SQLAlchemy>=2.0",
+  "psycopg[binary]>=3.1.0",
+  "pgvector>=0.3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.4", "alembic>=1.13"]
+
+[tool.setuptools]
+packages = ["age_search"]
+
+[tool.ruff]
+line-length = 100
+
+[project.scripts]
+agegraph = "agegraph_search.cli:main"
