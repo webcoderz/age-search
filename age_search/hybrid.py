@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Sequence, Type, TypeVar, Optional
+from typing import Sequence, Type, TypeVar
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from .cypher import cypher_json

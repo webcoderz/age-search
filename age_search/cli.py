@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import os
-import sys
 import argparse
 
 from sqlalchemy import create_engine, text
 
 from .migrations import install_all, InstallSpec
-from .engine import create_engine_all_in_one
 
 
 def _env(name: str, default: str | None = None) -> str:
@@ -31,14 +29,6 @@ def cmd_init(args: argparse.Namespace) -> int:
     url = args.url or _env("DATABASE_URL")
     # This uses plain create_engine because init should not require LOAD 'age'
     engine = create_engine(url)
-
-    spec = InstallSpec(
-        graph_name=args.graph_name,
-        enable_bm25=args.bm25,
-        enable_fts=not args.no_fts,
-        vector_index=args.vector_index,
-        analyze_after=not args.no_analyze,
-    )
 
     # user imports their models in init_db script typically; here we just do extensions + graph
     with engine.begin() as conn:

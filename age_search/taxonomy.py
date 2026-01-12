@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Iterable, Optional
+from typing import Iterable, Optional
 
 from sqlalchemy import ForeignKey, Integer, String, Table, Text, Column, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session

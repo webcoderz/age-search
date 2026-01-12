@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from .exceptions import MisconfiguredModelError, ExtensionMissingError
+from .exceptions import MisconfiguredModelError
 
 class BM25SearchMixin:
     """
