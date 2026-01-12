@@ -85,7 +85,14 @@ def cypher_json(
 
     sql = text(
         f"""
-        SELECT agtype_to_json({alias}) AS {alias}
+        SELECT
+          CASE
+            -- vertex/edge/path values often render with a ::type suffix (e.g. ::vertex);
+            -- agtype_to_json handles these.
+            WHEN position('::' in ({alias}::text)) > 0 THEN agtype_to_json({alias})
+            -- scalars / maps / lists generally cast cleanly from text -> json
+            ELSE ({alias}::text)::json
+          END AS {alias}
         FROM cypher(
           '{graph_lit}'::name,
           {cypher_lit},
