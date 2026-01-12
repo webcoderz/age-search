@@ -47,5 +47,6 @@ def create_engine_all_in_one(
         finally:
             cur.close()
 
-    engine.info["agegraph_cfg"] = cfg
+    # SQLAlchemy Engine does not guarantee an `.info` dict; store config on the engine itself.
+    setattr(engine, "agegraph_cfg", cfg)
     return engine

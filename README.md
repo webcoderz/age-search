@@ -1,5 +1,5 @@
 
-# `agegraph-search`
+# `age_search`
 
 A **unified SQLAlchemy extension** that combines:
 
@@ -74,7 +74,7 @@ AGE requires **per-connection initialization**.
 Always create your engine using:
 
 ```python
-from agegraph_search import create_engine_all_in_one
+from age_search import create_engine_all_in_one
 
 engine = create_engine_all_in_one(
     DATABASE_URL,
@@ -99,7 +99,7 @@ This is the reference model used throughout the examples.
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Integer, Text
 
-from agegraph_search import (
+from age_search import (
     Base,
     GraphNodeMixin,
     VectorMixin,
@@ -149,7 +149,7 @@ Create **extensions, graph, and indexes** with a single call.
 
 ```python
 from sqlalchemy import create_engine
-from agegraph_search.migrations import install_all, InstallSpec
+from age_search.migrations import install_all, InstallSpec
 from models.doc import Doc
 
 engine = create_engine(DATABASE_URL)
@@ -185,7 +185,7 @@ This creates:
 Keep AGE graph nodes in sync with ORM rows automatically.
 
 ```python
-from agegraph_search.hooks import install_graph_sync
+from age_search.hooks import install_graph_sync
 from models.doc import Doc
 
 install_graph_sync(Doc)
@@ -301,7 +301,7 @@ docs = Doc.bm25_search_objects(session, "graph neural networks")
 ### Simple hybrid (RRF)
 
 ```python
-from agegraph_search import hybrid_search
+from age_search import hybrid_search
 
 results = hybrid_search(
     session,
@@ -324,7 +324,7 @@ This:
 ## Typed hybrid results (scores + metadata)
 
 ```python
-from agegraph_search.hybrid2 import hybrid_search_results
+from age_search.hybrid2 import hybrid_search_results
 
 results = hybrid_search_results(
     session,
@@ -357,7 +357,7 @@ This is what you want for:
 ### Expand after search
 
 ```python
-from agegraph_search import graph_expand_ids
+from age_search import graph_expand_ids
 
 seed_ids = [r.id for r in results]
 
@@ -376,6 +376,63 @@ You can then:
 * re-rank
 * fetch objects
 * or run another hybrid search inside this subset
+
+---
+
+## Hierarchical labels (taxonomy)
+
+You typically want **two layers**:
+
+- **Relational taxonomy tables (source of truth)**: fast filtering, constraints, auditing
+- **AGE mirror** (optional): traversal/reasoning (`PARENT_OF`, `HAS_LABEL`)
+
+### Relational taxonomy
+
+Use the built-in `Label` model (adjacency list via `parent_id`):
+
+```python
+from age_search import Base
+from age_search.taxonomy import Label
+```
+
+For a document↔label join table, create it explicitly so your doc table name can be anything:
+
+```python
+from age_search.taxonomy import make_doc_labels_table
+
+doc_labels = make_doc_labels_table(Base.metadata, doc_table="docs")
+```
+
+To expand a subtree in pure SQL (recursive CTE):
+
+```python
+from age_search.taxonomy import descendant_label_ids
+
+ids = descendant_label_ids(session, root_label_id=42)
+```
+
+### AGE mirror (optional)
+
+Mirror taxonomy into AGE:
+
+- `(:Label {id, slug, name})`
+- `(:Label)-[:PARENT_OF]->(:Label)`
+- `(:Doc)-[:HAS_LABEL]->(:Label)`
+
+Then you can do **graph-constrained hybrid search in one call**:
+
+```python
+from age_search import hybrid_search_results_in_label_subtree
+
+results = hybrid_search_results_in_label_subtree(
+    session,
+    Doc,
+    graph_name="knowledge_graph",
+    root_label_id=42,
+    query_text="graph neural networks",
+    query_vec=query_embedding,
+)
+```
 
 ---
 

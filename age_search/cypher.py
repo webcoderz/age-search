@@ -7,7 +7,14 @@ from .config import AGEGraphConfig
 
 def _cfg(session: Session, graph_name: Optional[str] = None) -> AGEGraphConfig:
     bind = session.get_bind()
-    cfg = getattr(bind, "info", {}).get("agegraph_cfg") if bind is not None else None
+    cfg = None
+    if bind is not None:
+        # Connection objects have `.info`; Engine often does not.
+        info = getattr(bind, "info", None)
+        if isinstance(info, dict):
+            cfg = info.get("agegraph_cfg")
+        if cfg is None:
+            cfg = getattr(bind, "agegraph_cfg", None)
     if cfg is None:
         cfg = AGEGraphConfig(graph_name=graph_name or "knowledge_graph")
     if graph_name:

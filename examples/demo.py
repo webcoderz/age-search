@@ -1,7 +1,7 @@
 from sqlalchemy.orm import sessionmaker, Mapped, mapped_column
 from sqlalchemy import Integer, Text, text
 
-from agegraph_search import (
+from age_search import (
     Base, create_engine_all_in_one,
     GraphNodeMixin, VectorMixin, FTSSearchMixin, BM25SearchMixin,
     GraphRelationship, hybrid_search, graph_expand_ids

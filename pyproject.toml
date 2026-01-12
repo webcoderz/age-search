@@ -23,5 +23,11 @@ packages = ["age_search"]
 [tool.ruff]
 line-length = 100
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "integration: tests that require an external database (Postgres + Apache AGE)",
+]
+
 [project.scripts]
-agegraph = "agegraph_search.cli:main"
+agegraph = "age_search.cli:main"
