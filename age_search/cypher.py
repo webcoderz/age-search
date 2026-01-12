@@ -82,7 +82,6 @@ def cypher_json(
     alias = _require_safe_ident(returns_alias, what="returns alias")
 
     cypher_lit = _dollar_quote(cypher, tag_base="cy")
-    params_lit = _dollar_quote(json.dumps(params), tag_base="jp")
 
     sql = text(
         f"""
@@ -90,14 +89,14 @@ def cypher_json(
         FROM cypher(
           '{graph_lit}'::name,
           {cypher_lit},
-          {params_lit}
+          CAST(:params AS agtype)
         ) AS ({alias} agtype);
         """
     )
 
     rows = session.execute(
         sql,
-        {},
+        {"params": json.dumps(params)},
     ).all()
 
     out: list[Any] = []
