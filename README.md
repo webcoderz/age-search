@@ -1,6 +1,7 @@
 
 # `age_search`
-[![CI](https://github.com/webcoderz/age-search/actions/workflows/ci.yml/badge.svg)](https://github.com/webcoderz/age-search/actions/workflows/ci.yml)
+[![CI](https://github.com/webcoderz/age-search/actions/workflows/ci.yml/badge.svg)](https://github.com/webcoderz/age-search/actions/workflows/ci.yml) 
+[![Publish Python distribution to PyPI](https://github.com/webcoderz/age-search/actions/workflows/release.yml/badge.svg)](https://github.com/webcoderz/age-search/actions/workflows/release.yml)
 
 A **unified SQLAlchemy extension** that combines:
 
