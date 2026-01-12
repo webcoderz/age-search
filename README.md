@@ -55,7 +55,13 @@ This package provides:
 ## Installation
 
 ```bash
-pip install -e .
+pip install age_search
+```
+
+Dev install (repo checkout):
+
+```bash
+pip install -e ".[dev]"
 ```
 
 Dependencies:
@@ -66,6 +72,11 @@ Dependencies:
 * pgvector
 * Apache AGE installed server-side
 * Optional: `pg_search` (BM25)
+
+### PyPI README
+
+Yes — PyPI will display this README automatically.
+This repo is already configured with `readme = "README.md"` in `pyproject.toml`, so the long description on PyPI comes from this file.
 
 ---
 
