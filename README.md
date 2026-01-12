@@ -8,7 +8,7 @@ A **unified SQLAlchemy extension** that combines:
 * **Apache AGE** → graph traversal (Cypher)
 * **pgvector** → semantic vector search (cosine, HNSW / IVFFLAT)
 * **Postgres FTS** → built-in full-text search
-* **BM25 (pg_search / ParadeDB)** → high-quality lexical ranking
+* **BM25 (pg_search)** → high-quality lexical ranking
 * **Hybrid search** → lexical + semantic fusion
 * **Graph-constrained search** → search + expand via graph topology
 
