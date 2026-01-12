@@ -35,10 +35,14 @@ def cypher_json(
     cfg = _cfg(session, graph_name)
     params = params or {}
 
-    sql = text(f"""
+    # NOTE: avoid `:params::json` here; SQLAlchemy's text() parser may not
+    # recognize bindparams when followed by `::type`. Use CAST(...) instead.
+    sql = text(
+        f"""
         SELECT agtype_to_json({returns_alias}) AS {returns_alias}
-        FROM cypher(:graph, :cypher, :params::json) AS ({returns_alias} agtype);
-    """)
+        FROM cypher(:graph, :cypher, CAST(:params AS json)) AS ({returns_alias} agtype);
+        """
+    )
 
     rows = session.execute(
         sql,
