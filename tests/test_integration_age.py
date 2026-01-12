@@ -34,8 +34,8 @@ def test_age_cypher_json_smoke():
                 """
                 DO $$
                 BEGIN
-                  IF NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = :g::text) THEN
-                    PERFORM create_graph(:g::text);
+                  IF NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = CAST(:g AS text)) THEN
+                    PERFORM create_graph(CAST(:g AS text));
                   END IF;
                 END$$;
                 """
