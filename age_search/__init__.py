@@ -25,7 +25,7 @@ from .eval import (
 )
 
 
-__version__ = "0.1.0"
+__version__ = "0.0.0"
 
 __all__ = [
     "create_engine_all_in_one",

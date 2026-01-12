@@ -14,6 +14,11 @@ jobs:
   release:
     name: Bump, build, publish
     runs-on: ubuntu-latest
+    # Only allow releases from main.
+    if: ${{ github.ref_name == 'main' }}
+    concurrency:
+      group: release-${{ github.ref_name }}
+      cancel-in-progress: false
     permissions:
       contents: write
       id-token: write
@@ -46,9 +51,13 @@ jobs:
 
           git add pyproject.toml age_search/__init__.py || true
           git commit -m "Release v$VERSION" || echo "No changes to commit"
-          git tag -f "v$VERSION"
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "Tag v$VERSION already exists. Refusing to overwrite."
+            exit 1
+          fi
+          git tag "v$VERSION"
           git push origin "HEAD:${{ github.ref_name }}"
-          git push --tags --force
+          git push --tags
 
       - name: Build sdist/wheel
         run: |
