@@ -37,14 +37,12 @@ def cmd_init(args: argparse.Namespace) -> int:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         if args.bm25:
             conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_search;"))
-        conn.execute(text("""
-        DO $$
-        BEGIN
-          IF NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = :g) THEN
-            PERFORM create_graph(:g);
-          END IF;
-        END$$;
-        """), {"g": args.graph_name})
+        exists = conn.execute(
+            text("SELECT 1 FROM ag_catalog.ag_graph WHERE name = :g"),
+            {"g": args.graph_name},
+        ).first()
+        if not exists:
+            conn.execute(text("SELECT create_graph(CAST(:g AS name))"), {"g": args.graph_name})
 
     print("Initialized extensions + graph. Next run your app-specific init_db to create tables + indexes.")
     return 0

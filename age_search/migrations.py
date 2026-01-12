@@ -32,15 +32,19 @@ def ensure_extensions(conn: Connection, *, age: bool = True, vector: bool = True
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_search;"))
 
 def ensure_graph(conn: Connection, graph_name: str):
-    # Create graph if missing
-    conn.execute(text("""
-        DO $$
-        BEGIN
-          IF NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = :g) THEN
-            PERFORM create_graph(:g);
-          END IF;
-        END$$;
-    """), {"g": graph_name})
+    # Create graph if missing.
+    #
+    # Note: Avoid DO $$ ... $$ here. With psycopg, bind params inside PL/pgSQL blocks
+    # can hit "could not determine data type of parameter $1". Plain SQL is reliable.
+    exists = conn.execute(
+        text("SELECT 1 FROM ag_catalog.ag_graph WHERE name = :g"),
+        {"g": graph_name},
+    ).first()
+    if not exists:
+        conn.execute(
+            text("SELECT create_graph(CAST(:g AS name))"),
+            {"g": graph_name},
+        )
 
 def ensure_fts_index(conn, table: str, tsv_column: str, index_name: str):
     conn.execute(text(f"""

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 import pytest
-from sqlalchemy import String, bindparam, text
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from age_search.cypher import cypher_json
@@ -29,19 +29,16 @@ def test_age_cypher_json_smoke():
     # Ensure extension + graph exist.
     with engine.begin() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS age;"))
-        conn.execute(
-            text(
-                """
-                DO $$
-                BEGIN
-                  IF NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = CAST(:g AS text)) THEN
-                    PERFORM create_graph(CAST(:g AS text));
-                  END IF;
-                END$$;
-                """
-            ).bindparams(bindparam("g", type_=String())),
+        exists = conn.execute(
+            text("SELECT 1 FROM ag_catalog.ag_graph WHERE name = :g"),
             {"g": graph},
-        )
+        ).first()
+        if not exists:
+            # Avoid DO-block bind typing issues with psycopg; use plain SQL.
+            conn.execute(
+                text("SELECT create_graph(CAST(:g AS name))"),
+                {"g": graph},
+            )
 
     with Session(engine) as session:
         rows = cypher_json(session, "RETURN 1", graph_name=graph)
