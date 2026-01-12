@@ -1,9 +1,27 @@
 from __future__ import annotations
 import json
 from typing import Any, Optional
+import re
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from .config import AGEGraphConfig
+
+_SAFE_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _require_safe_ident(value: str, *, what: str) -> str:
+    """
+    Validate identifiers that will be interpolated into SQL text (not bound params).
+    """
+    if not _SAFE_IDENT.fullmatch(value):
+        raise ValueError(f"Unsafe {what}: {value!r}")
+    return value
+
+
+def _require_safe_graph_name(graph: str) -> str:
+    # AGE graph names are identifiers; keep this strict for SQL safety.
+    return _require_safe_ident(graph, what="graph name")
+
 
 def _cfg(session: Session, graph_name: Optional[str] = None) -> AGEGraphConfig:
     bind = session.get_bind()
@@ -35,26 +53,28 @@ def cypher_json(
     cfg = _cfg(session, graph_name)
     params = params or {}
 
-    # Apache AGE cypher() expects:
-    #   cypher(graph_name name, query cstring, params agtype)
-    # Passing json will fail function resolution on many installs, so we cast explicitly.
-    #
-    # Also avoid `:param::type` because SQLAlchemy's text() parser may not recognize
-    # bindparams when followed by `::type`. Use CAST(...) instead.
+    # Apache AGE cypher() often requires the graph name to be a *literal constant*,
+    # not a bound parameter. To keep this safe, we strictly validate identifiers
+    # and inline the graph name while still binding cypher text + params.
+    graph_lit = _require_safe_graph_name(cfg.graph_name)
+    alias = _require_safe_ident(returns_alias, what="returns alias")
+
+    # AGE expects params as agtype. agtype accepts JSON-ish text, so we pass a JSON string
+    # and cast to agtype.
     sql = text(
         f"""
-        SELECT agtype_to_json({returns_alias}) AS {returns_alias}
+        SELECT agtype_to_json({alias}) AS {alias}
         FROM cypher(
-          CAST(:graph AS name),
+          '{graph_lit}'::name,
           CAST(:cypher AS cstring),
           CAST(:params AS agtype)
-        ) AS ({returns_alias} agtype);
+        ) AS ({alias} agtype);
         """
     )
 
     rows = session.execute(
         sql,
-        {"graph": cfg.graph_name, "cypher": cypher, "params": json.dumps(params)},
+        {"cypher": cypher, "params": json.dumps(params)},
     ).all()
 
     out: list[Any] = []
