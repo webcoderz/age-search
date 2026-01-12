@@ -436,6 +436,54 @@ results = hybrid_search_results_in_label_subtree(
 
 ---
 
+## Weighted edges
+
+You can attach properties (including a numeric `weight`) when creating a relationship:
+
+```python
+# adds/updates relationship properties on the AGE edge
+doc1.related.add(session, doc2, weight=0.8, props={"source": "cooccur"})
+session.commit()
+```
+
+---
+
+## Community detection helpers (connected components)
+
+For a simple baseline "community" definition, you can compute **connected components**
+from an AGE edge list:
+
+```python
+from age_search.community import graph_connected_components
+
+communities = graph_connected_components(
+    session,
+    graph_name="knowledge_graph",
+    label="Doc",
+    edge="RELATED_TO",
+)
+```
+
+---
+
+## Benchmark + eval harness
+
+There’s a lightweight, dependency-free eval module (`age_search.eval`) with common IR metrics.
+You provide `EvalCase` objects and a `search(case) -> ranked_ids` function:
+
+```python
+from age_search.eval import EvalCase, evaluate
+
+cases = [
+    EvalCase(name="q1", relevant_ids={1, 2, 3}),
+]
+
+report = evaluate(cases, search=lambda c: [1, 9, 2, 8], benchmark=True)
+print(report)
+```
+
+---
+
 ## Index strategies (cosine)
 
 ### HNSW (default)

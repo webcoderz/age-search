@@ -51,16 +51,30 @@ class _BoundRel:
     def __call__(self, session: Session, *, graph_name: Optional[str] = None) -> CypherQuery:
         return self.query(session, graph_name=graph_name)
 
-    def add(self, session: Session, other: Any, *, graph_name: Optional[str] = None):
+    def add(
+        self,
+        session: Session,
+        other: Any,
+        *,
+        graph_name: Optional[str] = None,
+        props: Optional[dict[str, Any]] = None,
+        weight: Optional[float] = None,
+    ):
         src = self.rel.source_label or self.inst.__class__.__name__
         tgt = self.rel.target_label or other.__class__.__name__
         edge = self.rel.edge
+
+        rel_props = dict(props or {})
+        if weight is not None:
+            rel_props["weight"] = float(weight)
         cy = f"""
         MATCH (n:{src} {{{self.rel.source_key}: $src_id}})
         MATCH (m:{tgt} {{{self.rel.target_key}: $tgt_id}})
-        MERGE (n)-[:{edge}]->(m)
+        MERGE (n)-[r:{edge}]->(m)
+        {"SET r += $props" if rel_props else ""}
         RETURN m
         """
         q = CypherQuery(session, cy, "m", {"src_id": getattr(self.inst, self.rel.source_key),
-                                          "tgt_id": getattr(other, self.rel.target_key)}, graph_name=graph_name)
+                                          "tgt_id": getattr(other, self.rel.target_key),
+                                          "props": rel_props}, graph_name=graph_name)
         return q.first()
