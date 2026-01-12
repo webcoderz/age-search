@@ -515,21 +515,3 @@ Nothing is hidden. Everything composes.
 * lock you into one search strategy
 
 ---
-
-## Next things you can add (already easy)
-
-* Graph-constrained hybrid search in one call
-* Temporal edges
-* Multi-label graphs
-* Weighted edges
-* Streaming ingestion
-* Eval instrumentation
-
-If you want, next I can:
-
-* add **graph-constrained hybrid search in a single function**
-* add **edge weight support**
-* add **community detection helpers**
-* add **benchmark + eval harness**
-
-Just tell me what direction you want to push this next.
