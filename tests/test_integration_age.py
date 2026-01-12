@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import String, bindparam, text
 from sqlalchemy.orm import Session
 
 from age_search.cypher import cypher_json
@@ -34,12 +34,12 @@ def test_age_cypher_json_smoke():
                 """
                 DO $$
                 BEGIN
-                  IF NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = :g) THEN
-                    PERFORM create_graph(:g);
+                  IF NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = :g::text) THEN
+                    PERFORM create_graph(:g::text);
                   END IF;
                 END$$;
                 """
-            ),
+            ).bindparams(bindparam("g", type_=String())),
             {"g": graph},
         )
 
