@@ -8,6 +8,7 @@ from .relationships import GraphRelationship
 from .hybrid import hybrid_search, graph_expand_ids
 from .taxonomy import Label, make_doc_labels_table
 from .hybrid_graph import hybrid_search_results_constrained, hybrid_search_results_in_label_subtree
+from .hybrid_relational import hybrid_search_results_in_label_subtree_relational
 from .community import (
     connected_components,
     graph_connected_components,
@@ -40,6 +41,7 @@ __all__ = [
     "make_doc_labels_table",
     "hybrid_search_results_constrained",
     "hybrid_search_results_in_label_subtree",
+    "hybrid_search_results_in_label_subtree_relational",
     "connected_components",
     "graph_connected_components",
     "graph_edge_list_ids",
