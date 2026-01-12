@@ -73,12 +73,7 @@ Dependencies:
 * Apache AGE installed server-side
 * Optional: `pg_search` (BM25)
 
-### PyPI README
 
-Yes — PyPI will display this README automatically.
-This repo is already configured with `readme = "README.md"` in `pyproject.toml`, so the long description on PyPI comes from this file.
-
----
 
 ## Engine setup (IMPORTANT)
 
