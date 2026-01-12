@@ -37,12 +37,10 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     needs: tests
-    env:
-      # Pin this in your repo when you pick a stable AGE image tag; keeping it configurable avoids surprises.
-      AGE_IMAGE: apache/age:latest
     services:
       db:
-        image: ${{ env.AGE_IMAGE }}
+        # `env` context is not available here; use repo variable AGE_IMAGE if set, else default.
+        image: ${{ vars.AGE_IMAGE || 'apache/age:latest' }}
         ports:
           - 5432:5432
         env:
