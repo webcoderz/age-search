@@ -484,6 +484,13 @@ print(report)
 
 ---
 
+## Development + release notes
+
+- **CI** runs `ruff` + `pytest` on PRs.
+- **Releases**: use GitHub Actions → workflow **Publish Python distribution to PyPI** (manual dispatch) to bump version, tag, build, and publish.
+
+---
+
 ## Index strategies (cosine)
 
 ### HNSW (default)

@@ -1,0 +1,66 @@
+name: Publish Python distribution to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        type: choice
+        description: Choose the type of version bump
+        required: true
+        default: minor
+        options: [major, minor, patch, alpha, beta, rc, post]
+
+jobs:
+  release:
+    name: Bump, build, publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install release tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install hatch build
+
+      - name: Bump version, commit, and tag
+        id: bump
+        run: |
+          hatch version "${{ inputs.version_bump }}"
+          VERSION="$(hatch version)"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+          git config user.email "gha@github.com"
+          git config user.name "github robot"
+
+          git add pyproject.toml age_search/__init__.py || true
+          git commit -m "Release v$VERSION" || echo "No changes to commit"
+          git tag -f "v$VERSION"
+          git push origin "HEAD:${{ github.ref_name }}"
+          git push --tags --force
+
+      - name: Build sdist/wheel
+        run: |
+          python -m build
+
+      - name: Publish to PyPI (trusted publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.bump.outputs.tag }}" dist/* --generate-notes
