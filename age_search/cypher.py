@@ -35,12 +35,20 @@ def cypher_json(
     cfg = _cfg(session, graph_name)
     params = params or {}
 
-    # NOTE: avoid `:params::json` here; SQLAlchemy's text() parser may not
-    # recognize bindparams when followed by `::type`. Use CAST(...) instead.
+    # Apache AGE cypher() expects:
+    #   cypher(graph_name name, query cstring, params agtype)
+    # Passing json will fail function resolution on many installs, so we cast explicitly.
+    #
+    # Also avoid `:param::type` because SQLAlchemy's text() parser may not recognize
+    # bindparams when followed by `::type`. Use CAST(...) instead.
     sql = text(
         f"""
         SELECT agtype_to_json({returns_alias}) AS {returns_alias}
-        FROM cypher(:graph, :cypher, CAST(:params AS json)) AS ({returns_alias} agtype);
+        FROM cypher(
+          CAST(:graph AS name),
+          CAST(:cypher AS cstring),
+          CAST(:params AS agtype)
+        ) AS ({returns_alias} agtype);
         """
     )
 
