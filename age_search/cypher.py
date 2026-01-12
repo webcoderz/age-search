@@ -22,6 +22,25 @@ def _require_safe_graph_name(graph: str) -> str:
     # AGE graph names are identifiers; keep this strict for SQL safety.
     return _require_safe_ident(graph, what="graph name")
 
+def _dollar_quote(value: str, *, tag_base: str = "age") -> str:
+    """
+    Return a PostgreSQL dollar-quoted literal for `value`, choosing a delimiter tag
+    that doesn't occur in the value.
+    """
+    # Deterministic tag selection: try a small set, then fall back to numbered tags.
+    candidates = [tag_base, "cypher", "q", "p", f"{tag_base}{len(value)}"]
+    for tag in candidates:
+        delim = f"${tag}$"
+        if delim not in value:
+            return f"{delim}{value}{delim}"
+    i = 0
+    while True:
+        tag = f"{tag_base}{i}"
+        delim = f"${tag}$"
+        if delim not in value:
+            return f"{delim}{value}{delim}"
+        i += 1
+
 
 def _cfg(session: Session, graph_name: Optional[str] = None) -> AGEGraphConfig:
     bind = session.get_bind()
@@ -53,28 +72,32 @@ def cypher_json(
     cfg = _cfg(session, graph_name)
     params = params or {}
 
-    # Apache AGE cypher() often requires the graph name to be a *literal constant*,
-    # not a bound parameter. To keep this safe, we strictly validate identifiers
-    # and inline the graph name while still binding cypher text + params.
+    # Apache AGE cypher() is picky:
+    # - graph name must be a literal constant (not a bind param)
+    # - query must be a dollar-quoted string constant (not a bind param)
+    # We'll inline graph/query/params safely:
+    # - graph name + alias are strict identifiers
+    # - query + params are dollar-quoted string literals (delimiter chosen to avoid collisions)
     graph_lit = _require_safe_graph_name(cfg.graph_name)
     alias = _require_safe_ident(returns_alias, what="returns alias")
 
-    # AGE expects params as agtype. agtype accepts JSON-ish text, so we pass a JSON string
-    # and cast to agtype.
+    cypher_lit = _dollar_quote(cypher, tag_base="cy")
+    params_lit = _dollar_quote(json.dumps(params), tag_base="jp")
+
     sql = text(
         f"""
         SELECT agtype_to_json({alias}) AS {alias}
         FROM cypher(
           '{graph_lit}'::name,
-          CAST(:cypher AS cstring),
-          CAST(:params AS agtype)
+          {cypher_lit},
+          {params_lit}
         ) AS ({alias} agtype);
         """
     )
 
     rows = session.execute(
         sql,
-        {"cypher": cypher, "params": json.dumps(params)},
+        {},
     ).all()
 
     out: list[Any] = []
